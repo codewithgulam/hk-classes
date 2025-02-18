@@ -3,6 +3,7 @@ from django.contrib import admin
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
+
 from . import Hod_views, views, Staff_views, Student_views
 
 admin.site.site_header = "School ERP System"
@@ -52,6 +53,10 @@ urlpatterns = [
     path('Hod/Session/Update', Hod_views.UPDATE_SESSION, name='update_session'),
     path('Hod/Session/Delete/<str:id>', Hod_views.DELETE_SESSION, name='delete_session'),
 
+
+    path('mark_attendance/', Hod_views.MARK_ATTENDANCE, name='mark_attendance'),
+    path('view_attendance/', Hod_views.VIEW_ATTENDANCE, name='view_attendance'),
+    # other paths...
 #     path('Hod/Staff/Send_Notification', Hod_views.STAFF_SEND_NOTIFICATION, name='staff_send_notification'),
 #     path('Hod/Staff/save_notification', Hod_views.SAVE_STAFF_NOTIFICATION, name='save_staff_notification'),
 

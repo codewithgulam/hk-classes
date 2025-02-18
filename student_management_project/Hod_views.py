@@ -434,6 +434,46 @@ def DELETE_SESSION(request, id):
 
 
 
+# Attandence views
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from app.models import Student, Attendance, Attendance_Report, Session_Year
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required(redirect_field_name='next', login_url='login')
+def MARK_ATTENDANCE(request):
+    students = Student.objects.all()
+    sessions = Session_Year.objects.all()
+    if request.method == 'POST':
+        date = request.POST.get('attendance_date')
+        session_year_id = request.POST.get('session_year_id')
+        for student in students:
+            status = request.POST.get(f'status_{student.id}')
+            attendance = Attendance.objects.create(student=student, attendance_date=date, session_year_id_id=session_year_id)
+            Attendance_Report.objects.create(student_id=student, attendance_id=attendance, status=status)
+        messages.success(request, 'Attendance marked successfully.')
+        return redirect('mark_attendance')
+    return render(request, 'Hod/mark_attendance.html', {'students': students, 'sessions': sessions})
+
+
+@staff_member_required(redirect_field_name='next', login_url='login')
+def VIEW_ATTENDANCE(request):
+    sessions = Session_Year.objects.all()
+    attendance_records = None
+    entered_date = None
+    entered_session_year_id = None
+
+    if request.method == 'POST':
+        entered_date = request.POST.get('attendance_date')
+        entered_session_year_id = request.POST.get('session_year_id')
+        attendance_records = Attendance_Report.objects.filter(attendance_id__attendance_date=entered_date, attendance_id__session_year_id_id=entered_session_year_id)
+
+    return render(request, 'Hod/view_attendance.html', {
+        'sessions': sessions,
+        'attendance_records': attendance_records,
+        'entered_date': entered_date,
+        'entered_session_year_id': entered_session_year_id
+    })
 # This is a Staff Notification
 # @staff_member_required(redirect_field_name='next', login_url='login')
 # def STAFF_SEND_NOTIFICATION(request):

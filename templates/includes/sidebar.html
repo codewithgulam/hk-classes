@@ -20,6 +20,14 @@
                         <li><a href="{% url 'view_student' %}">View Student </a></li>
                      </ul>
                   </li>
+                  <li class="submenu {% active_link 'add_student' 'active' %} {% active_link 'view_student' 'active' %}">
+                     <a href="#"><i class="fas fa-calendar-alt"></i> <span> Attendance</span> <span
+                           class="menu-arrow"></span></a>
+                     <ul>
+                        <li><a href="{% url 'mark_attendance' %}">Mark Attendance</a></li>
+                        <li><a href="{% url 'view_attendance' %}">View Attendance </a></li>
+                     </ul>
+                  </li>
                   <li class="submenu {% active_link 'add_staff' 'active' %} {% active_link 'view_staff' 'active' %}">
                      <a href="#"><i class="fas fa-chalkboard-teacher"></i> <span> Staff</span> <span
                            class="menu-arrow"></span></a>
