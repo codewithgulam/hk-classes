@@ -51,7 +51,13 @@
                                     </h2>
                                 </td>
                                 <td>{{ student.school.name }}</td>
-                                <td>{{ student.fee }}</td>
+                                <td>
+                                    {% if student.fees.exists %}
+                                        {{ student.fees.latest.amount }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </td>
                                 <td>{{ student.admin.email }}</td>
                                 <td>{{ student.gender }}</td>
                                 <td>{{ student.address }}</td>

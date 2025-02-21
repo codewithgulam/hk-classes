@@ -1,5 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
+from datetime import datetime
 # Create your models here.
 
 class CustomUser(AbstractUser):
@@ -35,7 +38,6 @@ class Student(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='students')
-    fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     def __str__(self):
         return self.admin.first_name + " " + self.admin.last_name
 
@@ -45,7 +47,7 @@ class Staff(models.Model):
     gender = models.CharField(max_length=100)
     mobile_number = models.CharField(max_length=15)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
     def __str__(self):
         return self.admin.username
 
@@ -54,7 +56,7 @@ class Attendance(models.Model):
     attendance_date = models.DateField()
     session_year_id = models.ForeignKey(Session_Year, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.student.admin.first_name + " " + self.student.admin.last_name
@@ -64,7 +66,29 @@ class Attendance_Report(models.Model):
     attendance_id = models.ForeignKey(Attendance, on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=[('present', 'Present'), ('absent', 'Absent')])
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.student_id.admin.first_name + " " + self.student_id.admin.last_name
+
+class Fee(models.Model):
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='fees')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    is_paid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    due_date = models.DateField(null=True, blank=True)  # Allow null and blank values
+
+    def __str__(self):
+        return f"{self.student.admin.first_name} {self.student.admin.last_name} - {'Paid' if self.is_paid else 'Unpaid'}"
+
+    class Meta:
+        get_latest_by = 'created_at'
+
+    def save(self, *args, **kwargs):
+        if not self.due_date:
+            if not self.created_at:
+                self.created_at = datetime.now()
+            self.due_date = (self.created_at + relativedelta(months=1)).date()
+        super().save(*args, **kwargs)
+

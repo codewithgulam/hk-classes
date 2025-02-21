@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, Session_Year, Student, Staff, Attendance, Attendance_Report
+from .models import CustomUser, Session_Year, Student, Staff, Attendance, Attendance_Report, Fee
 
 class UserModel(UserAdmin):
     list_display = ['username', 'first_name', 'last_name', 'user_type', 'profile_pic', 'is_staff']
@@ -27,3 +27,8 @@ class AttendanceAdmin(admin.ModelAdmin):
 @admin.register(Attendance_Report)
 class AttReportAdmin(admin.ModelAdmin):
     list_display = ['id', 'student_id', 'attendance_id', 'created_at', 'updated_at']
+
+@admin.register(Fee)
+class FeeAdmin(admin.ModelAdmin):
+    list_display = ['id', 'student', 'amount', 'is_paid', 'created_at']
+

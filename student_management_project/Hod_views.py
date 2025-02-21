@@ -1,36 +1,57 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from app.models import School, Session_Year, Student,CustomUser, Staff
+from app.models import School, Session_Year, Student,CustomUser, Staff, Fee , Attendance, Attendance_Report
 from django.contrib import messages
+from django.db import models
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.models import User
+from django.db.models import Count,Q
+import openpyxl
+from django.http import HttpResponse # Updated import
+from django.db.models import Count
+from datetime import date, timedelta
 
+from datetime import date, timedelta
+from app.models import Fee
+
+def get_fees_due_soon():
+    today = date.today()
+    due_date_threshold = today + timedelta(days=7)
+    fees_due_soon = Fee.objects.filter(due_date__lte=due_date_threshold, is_paid=False)
+    return fees_due_soon
 
 @staff_member_required(redirect_field_name='next', login_url='login')
 def HOME(request):
     student_count = Student.objects.filter(admin__user_type=3).count()
     staff_count = Staff.objects.filter(admin__user_type=2).count()
     school_count = School.objects.all().count()
-    # subject_count = Subject.objects.all().count()
     student_gender_male = Student.objects.filter(admin__user_type=3, gender='Male').count()
     student_gender_female = Student.objects.filter(admin__user_type=3, gender='Female').count()
     student_gender_other = Student.objects.filter(admin__user_type=3, gender='Other').count()
+
+    # Calculate the school with the highest number of students
+    school_with_highest_students = Student.objects.values('school__name').annotate(student_count=Count('id')).order_by('-student_count').first()
+
+    # Get fees due soon
+    fees_due_soon = get_fees_due_soon()
+
     context = {
         'student_count': student_count,
         'staff_count': staff_count,
         'course_count': school_count,
-        # 'subject_count': subject_count,
         'student_gender_male': student_gender_male,
         'student_gender_female': student_gender_female,
-        'student_gender_other': student_gender_other
+        'student_gender_other': student_gender_other,
+        'school_with_highest_students': school_with_highest_students['school__name'] if school_with_highest_students else 'N/A',
+        'highest_student_count': school_with_highest_students['student_count'] if school_with_highest_students else 0,
+        'fees_due_soon': fees_due_soon,
     }
     return render(request, 'Hod/home.html', context)
 
-
 @staff_member_required(redirect_field_name='next', login_url='login')
 def ADD_STUDENT(request):
-    schools = School.objects.all() 
-    session_years = Session_Year.objects.all() 
+    schools = School.objects.all()
+    session_years = Session_Year.objects.all()
 
     if request.method == "POST":
         profile_pic = request.FILES.get('profile_pic')
@@ -45,7 +66,7 @@ def ADD_STUDENT(request):
         session_year_id = request.POST.get('session_year_id')
         join_date = request.POST.get('join_date')
         mobile_number = request.POST.get('mobile_number')
-        fee = request.POST.get('fee')
+        fee_amount = request.POST.get('fee_amount')
 
         if CustomUser.objects.filter(email=email).exists():
             messages.warning(request, 'Email Is Already Taken')
@@ -64,8 +85,7 @@ def ADD_STUDENT(request):
                 'session_year_id': session_year_id,
                 'join_date': join_date,
                 'mobile_number': mobile_number,
-                'fee': fee,
-
+                'fee_amount': fee_amount,
             }
             return render(request, 'Hod/add_student.html', context)
         if CustomUser.objects.filter(username=username).exists():
@@ -85,8 +105,7 @@ def ADD_STUDENT(request):
                 'session_year_id': session_year_id,
                 'join_date': join_date,
                 'mobile_number': mobile_number,
-                'fee': fee,
-
+                'fee_amount': fee_amount,
             }
             return render(request, 'Hod/add_student.html', context)
         else:
@@ -97,6 +116,8 @@ def ADD_STUDENT(request):
             session_year_instance = Session_Year.objects.get(id=session_year_id)
             student = Student(admin=user, address=address, session_year_id=session_year_instance, school=school_instance, gender=gender, join_data=join_date, mobile_number=mobile_number)
             student.save()
+            # Create a Fee instance for the student
+            Fee.objects.create(student=student, amount=fee_amount)
             messages.success(request, user.first_name + " " + user.last_name + " Are Successfully Added. !!!")
             return redirect('add_student')
 
@@ -435,22 +456,29 @@ def DELETE_SESSION(request, id):
 
 
 # Attandence views
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from app.models import Student, Attendance, Attendance_Report, Session_Year
-from django.contrib.admin.views.decorators import staff_member_required
-
 @staff_member_required(redirect_field_name='next', login_url='login')
 def MARK_ATTENDANCE(request):
-    students = Student.objects.all()
+    students = Student.objects.filter(admin__user_type=3)  # Filter only students
     sessions = Session_Year.objects.all()
     if request.method == 'POST':
         date = request.POST.get('attendance_date')
         session_year_id = request.POST.get('session_year_id')
         for student in students:
             status = request.POST.get(f'status_{student.id}')
-            attendance = Attendance.objects.create(student=student, attendance_date=date, session_year_id_id=session_year_id)
-            Attendance_Report.objects.create(student_id=student, attendance_id=attendance, status=status)
+            # Check if attendance already exists for the student on the given date and session year
+            attendance, created = Attendance.objects.get_or_create(
+                student=student,
+                attendance_date=date,
+                session_year_id_id=session_year_id
+            )
+            # Check if attendance report already exists for the student
+            attendance_report, created = Attendance_Report.objects.get_or_create(
+                student_id=student,
+                attendance_id=attendance
+            )
+            # Update the status of the attendance report
+            attendance_report.status = status
+            attendance_report.save()
         messages.success(request, 'Attendance marked successfully.')
         return redirect('mark_attendance')
     return render(request, 'Hod/mark_attendance.html', {'students': students, 'sessions': sessions})
@@ -466,7 +494,11 @@ def VIEW_ATTENDANCE(request):
     if request.method == 'POST':
         entered_date = request.POST.get('attendance_date')
         entered_session_year_id = request.POST.get('session_year_id')
-        attendance_records = Attendance_Report.objects.filter(attendance_id__attendance_date=entered_date, attendance_id__session_year_id_id=entered_session_year_id)
+        attendance_records = Attendance_Report.objects.filter(
+            attendance_id__attendance_date=entered_date,
+            attendance_id__session_year_id_id=entered_session_year_id,
+            student_id__admin__user_type=3  # Filter only students
+        )
 
     return render(request, 'Hod/view_attendance.html', {
         'sessions': sessions,
@@ -474,6 +506,105 @@ def VIEW_ATTENDANCE(request):
         'entered_date': entered_date,
         'entered_session_year_id': entered_session_year_id
     })
+
+
+@staff_member_required(redirect_field_name='next', login_url='login')
+def ATTENDANCE_SUMMARY(request):
+    sessions = Session_Year.objects.all()
+    summary_records = None
+    entered_session_year_id = None
+    entered_from_date = None
+    entered_to_date = None
+
+    if request.method == 'POST':
+        entered_session_year_id = request.POST.get('session_year_id')
+        entered_from_date = request.POST.get('from_date')
+        entered_to_date = request.POST.get('to_date')
+        summary_records = Attendance_Report.objects.filter(
+            attendance_id__session_year_id_id=entered_session_year_id,
+            attendance_id__attendance_date__range=[entered_from_date, entered_to_date]
+        ).values(
+            'student_id', 'student_id__admin__first_name', 'student_id__admin__last_name'
+        ).annotate(
+            total_present=Count('id', filter=Q(status='present')),
+            total_absent=Count('id', filter=Q(status='absent'))
+        )
+
+        if 'export' in request.POST:
+            return export_to_excel(summary_records, entered_from_date, entered_to_date)
+
+    return render(request, 'Hod/attendance_summary.html', {
+        'sessions': sessions,
+        'summary_records': summary_records,
+        'entered_session_year_id': entered_session_year_id,
+        'entered_from_date': entered_from_date,
+        'entered_to_date': entered_to_date
+    })
+
+def export_to_excel(summary_records, from_date, to_date):
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = f"Attendance Summary {from_date} to {to_date}"
+
+    # Add headers
+    headers = ['ID', 'Name', 'Total Present', 'Total Absent']
+    sheet.append(headers)
+
+    # Add data
+    for idx, record in enumerate(summary_records, start=1):
+        row = [
+            idx,
+            f"{record['student_id__admin__first_name']} {record['student_id__admin__last_name']}",
+            record['total_present'],
+            record['total_absent']
+        ]
+        sheet.append(row)
+
+    # Create a response object
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=attendance_summary_{from_date}_to_{to_date}.xlsx'
+    workbook.save(response)
+    return response
+
+
+# Fee management
+@login_required(login_url='/')
+def FEE_LIST(request):
+    fees = Fee.objects.all()
+    context = {
+        'fees': fees
+    }
+    return render(request, 'Hod/fee_list.html', context)
+
+@login_required(login_url='/')
+def MARK_FEE_PAID(request, fee_id):
+    fee = get_object_or_404(Fee, id=fee_id)
+    fee.is_paid = True
+    fee.save()
+    messages.success(request, "Fee marked as paid successfully!")
+    return redirect('fee_list')
+
+@login_required(login_url='/')
+def MARK_FEE_UNPAID(request, fee_id):
+    fee = get_object_or_404(Fee, id=fee_id)
+    fee.is_paid = False
+    fee.save()
+    messages.success(request, "Fee marked as unpaid successfully!")
+    return redirect('fee_list')
+
+@login_required(login_url='/')
+def VIEW_DUE_FEES(request):
+    today = date.today()
+    due_date_threshold = today + timedelta(days=7)
+    fees_due_soon = Fee.objects.filter(due_date__lte=due_date_threshold, is_paid=False)
+    context = {
+        'fees_due_soon': fees_due_soon,
+        'fees': Fee.objects.all()
+    }
+    messages.success(request, "Fees due soon have been displayed.")
+    return render(request, 'Hod/fee_list.html', context)
+
+
 # This is a Staff Notification
 # @staff_member_required(redirect_field_name='next', login_url='login')
 # def STAFF_SEND_NOTIFICATION(request):

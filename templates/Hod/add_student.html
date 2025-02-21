@@ -119,8 +119,8 @@
                     </div>
                     <div class="col-12 col-sm-6">
                         <div class="form-group">
-                            <label>Fee</label>
-                            <input type="number" step="0.01" required class="form-control" name="fee" value="{{ fee|default_if_none:'' }}">
+                            <label for="fee_amount">Fee</label>
+                            <input type="number" step="0.01" required class="form-control" id="fee_amount" name="fee_amount" value="{{ fee|default_if_none:'' }}">
                         </div>
                     </div>
                     <div class="col-12">

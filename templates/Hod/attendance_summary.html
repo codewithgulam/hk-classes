@@ -1,3 +1,4 @@
+<!-- filepath: /c:/Users/gswip.mohdl/Desktop/Laraib/my_prj/home/grouperp/ERP/templates/Hod/attendance_summary.html -->
 {% extends 'base.html' %}
 
 {% block content %}
@@ -6,7 +7,7 @@
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col">
-                <h3 class="page-title">View Attendance</h3>
+                <h3 class="page-title">Attendance Summary</h3>
                 <ul class="breadcrumb">
                     <li class="breadcrumb-item"><a href="#">Attendance</a></li>
                 </ul>
@@ -22,13 +23,7 @@
                         {% csrf_token %}
                         <div class="row">
                             <div class="col-12">
-                                <h5 class="form-title"><span>Attendance View Information</span></h5>
-                            </div>
-                            <div class="col-12 col-sm-6">
-                                <div class="form-group">
-                                    <label for="attendance_date">Date:</label>
-                                    <input type="date" id="attendance_date" name="attendance_date" required class="form-control" value="{{ entered_date }}">
-                                </div>
+                                <h5 class="form-title"><span>Attendance Summary Information</span></h5>
                             </div>
                             <div class="col-12 col-sm-6">
                                 <div class="form-group">
@@ -41,8 +36,23 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="form-group">
+                                    <label for="from_date">From Date:</label>
+                                    <input type="date" id="from_date" name="from_date" required class="form-control" value="{{ entered_from_date }}">
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6">
+                                <div class="form-group">
+                                    <label for="to_date">To Date:</label>
+                                    <input type="date" id="to_date" name="to_date" required class="form-control" value="{{ entered_to_date }}">
+                                </div>
+                            </div>
                             <div class="col-12">
-                                <button type="submit" class="btn btn-primary">View Attendance</button>
+                                <button type="submit" class="btn btn-primary">View Summary</button>
+                                {% if summary_records %}
+                                <button type="submit" name="export" value="export" class="btn btn-secondary">Export to Excel</button>
+                                {% endif %}
                             </div>
                         </div>
                     </form>
@@ -51,7 +61,7 @@
         </div>
     </div>
 
-    {% if attendance_records %}
+    {% if summary_records %}
     <div class="row">
         <div class="col-sm-12">
             <div class="card">
@@ -62,15 +72,17 @@
                                 <tr>
                                     <th>ID</th>
                                     <th>Name</th>
-                                    <th>Status</th>
+                                    <th>Total Present</th>
+                                    <th>Total Absent</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for record in attendance_records %}
+                                {% for record in summary_records %}
                                 <tr>
-                                    <td>{{ record.student_id.admin.id }}</td>
-                                    <td>{{ record.student_id.admin.first_name }} {{ record.student_id.admin.last_name }}</td>
-                                    <td>{{ record.status }}</td>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ record.student_id__admin__first_name }} {{ record.student_id__admin__last_name }}</td>
+                                    <td>{{ record.total_present }}</td>
+                                    <td>{{ record.total_absent }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

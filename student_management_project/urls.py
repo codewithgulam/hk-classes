@@ -56,7 +56,16 @@ urlpatterns = [
 
     path('mark_attendance/', Hod_views.MARK_ATTENDANCE, name='mark_attendance'),
     path('view_attendance/', Hod_views.VIEW_ATTENDANCE, name='view_attendance'),
-    # other paths...
+    path('attendance_summary/', Hod_views.ATTENDANCE_SUMMARY, name='attendance_summary'),
+
+    path('fees/', Hod_views.FEE_LIST, name='fee_list'),
+    path('fees/mark_paid/<int:fee_id>/', Hod_views.MARK_FEE_PAID, name='mark_fee_paid'),
+    path('fees/mark_unpaid/<int:fee_id>/', Hod_views.MARK_FEE_UNPAID, name='mark_fee_unpaid'),
+    path('fees/send_notifications/', Hod_views.VIEW_DUE_FEES, name='view_due_fees'),
+
+    
+    
+ # other paths...
 #     path('Hod/Staff/Send_Notification', Hod_views.STAFF_SEND_NOTIFICATION, name='staff_send_notification'),
 #     path('Hod/Staff/save_notification', Hod_views.SAVE_STAFF_NOTIFICATION, name='save_staff_notification'),
 
