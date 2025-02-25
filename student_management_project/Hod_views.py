@@ -11,7 +11,7 @@ from django.http import HttpResponse # Updated import
 from django.db.models import Count
 from datetime import date, timedelta
 
-from datetime import date, timedelta
+from collections import defaultdict
 from app.models import Fee
 
 def get_fees_due_soon():
@@ -570,11 +570,45 @@ def export_to_excel(summary_records, from_date, to_date):
 # Fee management
 @login_required(login_url='/')
 def FEE_LIST(request):
+    # Generate fees for all students
+    Fee.generate_fees()
+
     fees = Fee.objects.all()
+
+    # Group fees by month
+    fees_by_month = defaultdict(list)
+    for fee in fees:
+        month = fee.due_date.strftime('%B %Y')
+        fees_by_month[month].append(fee)
+
+    # Convert defaultdict to a regular dict for easier template handling
+    fees_by_month = dict(fees_by_month)
+
     context = {
-        'fees': fees
+        'fees_by_month': fees_by_month,
     }
     return render(request, 'Hod/fee_list.html', context)
+
+
+@login_required(login_url='/')
+def VIEW_DUE_FEES(request):
+    today = date.today()
+    due_date_threshold = today + timedelta(days=7)
+    fees_due_soon = Fee.objects.filter(due_date__lte=due_date_threshold, is_paid=False)
+
+    # Group fees by month
+    fees_by_month = defaultdict(list)
+    for fee in fees_due_soon:
+        month = fee.due_date.strftime('%B %Y')
+        fees_by_month[month].append(fee)
+
+    # Convert defaultdict to a regular dict for easier template handling
+    fees_by_month = dict(fees_by_month)
+
+    context = {
+        'fees_by_month': fees_by_month,
+    }
+    return render(request, 'Hod/due_fees.html', context)
 
 @login_required(login_url='/')
 def MARK_FEE_PAID(request, fee_id):
@@ -592,17 +626,6 @@ def MARK_FEE_UNPAID(request, fee_id):
     messages.success(request, "Fee marked as unpaid successfully!")
     return redirect('fee_list')
 
-@login_required(login_url='/')
-def VIEW_DUE_FEES(request):
-    today = date.today()
-    due_date_threshold = today + timedelta(days=7)
-    fees_due_soon = Fee.objects.filter(due_date__lte=due_date_threshold, is_paid=False)
-    context = {
-        'fees_due_soon': fees_due_soon,
-        'fees': Fee.objects.all()
-    }
-    messages.success(request, "Fees due soon have been displayed.")
-    return render(request, 'Hod/fee_list.html', context)
 
 
 # This is a Staff Notification

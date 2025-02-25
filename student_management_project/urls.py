@@ -61,7 +61,7 @@ urlpatterns = [
     path('fees/', Hod_views.FEE_LIST, name='fee_list'),
     path('fees/mark_paid/<int:fee_id>/', Hod_views.MARK_FEE_PAID, name='mark_fee_paid'),
     path('fees/mark_unpaid/<int:fee_id>/', Hod_views.MARK_FEE_UNPAID, name='mark_fee_unpaid'),
-    path('fees/send_notifications/', Hod_views.VIEW_DUE_FEES, name='view_due_fees'),
+    path('fees/view_due_fees/', Hod_views.VIEW_DUE_FEES, name='view_due_fees'),
 
     
     

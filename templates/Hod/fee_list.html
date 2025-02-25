@@ -21,56 +21,63 @@
     <div class="col-sm-12">
         <div class="card card-table">
             <div class="card-body">
-                {% if fees_due_soon %}
-                <div class="alert alert-warning">
-                    <strong>Fees Due Soon:</strong>
-                    <ul>
-                        {% for fee in fees_due_soon %}
-                        <li>{{ fee.student.admin.first_name }} {{ fee.student.admin.last_name }} - Due Date: {{ fee.due_date }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                {% endif %}
-                {% if fees %}
-                <div class="table-responsive">
-                    <table class="table table-hover table-center mb-0">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Student</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Due Date</th>
-                                <th>Created At</th>
-                                <th class="text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for fee in fees %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ fee.student.admin.first_name }} {{ fee.student.admin.last_name }}</td>
-                                <td>{{ fee.amount }}</td>
-                                <td>{{ fee.is_paid|yesno:"Paid,Unpaid" }}</td>
-                                <td>{{ fee.due_date }}</td>
-                                <td>{{ fee.created_at }}</td>
-                                <td class="text-right">
-                                    <div class="actions">
-                                        {% if not fee.is_paid %}
-                                        <a href="{% url 'mark_fee_paid' fee.id %}" class="btn btn-sm bg-success-light mr-2">
-                                            <i class="fas fa-check"></i> Mark as Paid
-                                        </a>
-                                        {% else %}
-                                        <a href="{% url 'mark_fee_unpaid' fee.id %}" class="btn btn-sm bg-danger-light mr-2">
-                                            <i class="fas fa-times"></i> Mark as Unpaid
-                                        </a>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                {% if fees_by_month %}
+                <div class="accordion" id="accordionExample">
+                    {% for month, fees in fees_by_month.items %}
+                    <div class="card">
+                        <div class="card-header" id="heading{{ forloop.counter }}">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse{{ forloop.counter }}">
+                                    <i class="fas fa-chevron-down"></i> {{ month }}
+                                </button>
+                            </h5>
+                        </div>
+                        <div id="collapse{{ forloop.counter }}" class="collapse" aria-labelledby="heading{{ forloop.counter }}" data-parent="#accordionExample">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-center mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Student</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                                <th>Due Date</th>
+                                                <th>Created At</th>
+                                                <th class="text-right">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for fee in fees %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ fee.student.admin.first_name }} {{ fee.student.admin.last_name }}</td>
+                                                <td>{{ fee.amount }}</td>
+                                                <td>{{ fee.is_paid|yesno:"Paid,Unpaid" }}</td>
+                                                <td>{{ fee.due_date }}</td>
+                                                <td>{{ fee.created_at }}</td>
+                                                <td class="text-right">
+                                                    <div class="actions">
+                                                        {% if not fee.is_paid %}
+                                                        <a href="{% url 'mark_fee_paid' fee.id %}" class="btn btn-sm bg-success-light mr-2">
+                                                            <i class="fas fa-check"></i> Mark as Paid
+                                                        </a>
+                                                        {% else %}
+                                                        <a href="{% url 'mark_fee_unpaid' fee.id %}" class="btn btn-sm bg-danger-light mr-2">
+                                                            <i class="fas fa-times"></i> Mark as Unpaid
+                                                        </a>
+                                                        {% endif %}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
                 {% else %}
                 <h4 class="text-center text-red">No Data</h4>

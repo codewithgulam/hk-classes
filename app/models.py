@@ -87,8 +87,19 @@ class Fee(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.due_date:
-            if not self.created_at:
-                self.created_at = datetime.now()
-            self.due_date = (self.created_at + relativedelta(months=1)).date()
+            join_date = datetime.strptime(self.student.join_data, '%Y-%m-%d')
+            self.due_date = (join_date + relativedelta(days=30)).date()
         super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_fees():
+        students = Student.objects.all()
+        today = datetime.today().date()
+        for student in students:
+            join_date = datetime.strptime(student.join_data, '%Y-%m-%d').date()
+            next_due_date = join_date
+            while next_due_date <= today:
+                if not Fee.objects.filter(student=student, due_date=next_due_date).exists():
+                    Fee.objects.create(student=student, amount=1000, due_date=next_due_date)  # Adjust the amount as needed
+                next_due_date += timedelta(days=30)
 
