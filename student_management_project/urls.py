@@ -28,7 +28,8 @@ urlpatterns = [
     path('Hod/Student/Edit/<int:student_id>', Hod_views.EDIT_STUDENT, name="edit_student"),
     path('Hod/Student/Update', Hod_views.UPDATE_STUDENT, name="update_student"),
     path('Hod/Student/Delete/<str:admin>', Hod_views.DELETE_STUDENT, name='delete_student'),
-
+    path('student/profile/<int:student_id>/', Hod_views.student_profile, name='student_profile'),
+    
     path('Hod/Staff/Add', Hod_views.ADD_STAFF, name='add_staff'),
     path('Hod/Staff/View', Hod_views.VIEW_STAFF, name='view_staff'),
     path('Hod/Staff/Edit/<str:id>', Hod_views.EDIT_STAFF, name='edit_staff'),

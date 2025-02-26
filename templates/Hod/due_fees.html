@@ -31,17 +31,30 @@
                                 <th>Status</th>
                                 <th>Due Date</th>
                                 <th>Created At</th>
+                                <th class="text-right">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for fee in fees %}
                             <tr>
                                 <td>{{ forloop.counter }}</td>
-                                <td>{{ fee.student.admin.first_name }} {{ fee.student.admin.last_name }}</td>
+                                <td>
+                                    <h2 class="table-avatar">
+                                        <a href="{% url 'student_profile' fee.student.id %}" class="avatar avatar-sm mr-2">
+                                            <img class="avatar-img rounded-circle" src="/{{ fee.student.admin.profile_pic }}" alt="User Image">
+                                        </a>
+                                        <a href="{% url 'student_profile' fee.student.id %}">{{ fee.student.admin.first_name }} {{ fee.student.admin.last_name }}</a>
+                                    </h2>
+                                </td>
                                 <td>{{ fee.amount }}</td>
                                 <td>{{ fee.is_paid|yesno:"Paid,Unpaid" }}</td>
                                 <td>{{ fee.due_date }}</td>
                                 <td>{{ fee.created_at }}</td>
+                                <td class="text-right">
+                                    <a href="https://wa.me/{{ fee.student.mobile_number }}?text=Dear {{ fee.student.admin.first_name }} {{ fee.student.admin.last_name }}, your fee of amount {{ fee.amount }} is due on {{ fee.due_date }}. Please make the payment at your earliest convenience." target="_blank" class="btn btn-sm bg-success-light mr-2">
+                                        <i class="fas fa-comment"></i> Send WhatsApp
+                                    </a>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

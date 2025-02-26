@@ -1,0 +1,107 @@
+<!-- filepath: /C:/Users/gswip.mohdl/Desktop/Laraib/my_prj/home/grouperp/ERP/templates/Hod/student_profile.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header">
+    <div class="row align-items-center">
+        <div class="col">
+            <h3 class="page-title">Student Profile</h3>
+            <ul class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'hod_home' %}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Student Profile</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <img src="/{{ student.admin.profile_pic }}" alt="Student Image" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px;">
+                <h4 class="card-title">Personal Details</h4>
+                <ul class="list-group list-group-flush text-left">
+                    <li class="list-group-item"><strong>Name:</strong> {{ student.admin.first_name }} {{ student.admin.last_name }}</li>
+                    <li class="list-group-item"><strong>Gender:</strong> {{ student.gender }}</li>
+                    <li class="list-group-item"><strong>Address:</strong> {{ student.address }}</li>
+                    <li class="list-group-item"><strong>Mobile Number:</strong> {{ student.mobile_number }}</li>
+                    <li class="list-group-item"><strong>School:</strong> {{ student.school.name }}</li>
+                    <li class="list-group-item"><strong>Session Year:</strong> {{ student.session_year_id.session_start }} - {{ student.session_year_id.session_end }}</li>
+                    <li class="list-group-item"><strong>Join Date:</strong> {{ student.join_data }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Attendance Records</h4>
+                <div class="table-responsive">
+                    {% for month, counts in page_obj %}
+                    <h5>{{ month }} (Present: {{ counts.present }}, Absent: {{ counts.absent }})</h5>
+                    <hr>
+                    {% endfor %}
+                </div>
+                <div class="pagination-wrapper">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                    <span class="sr-only">Previous</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                    <span class="sr-only">Next</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h4 class="card-title">Fee Records</h4>
+                <div class="table-responsive">
+                    <table class="table table-hover table-center mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fee in fee_records %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ fee.amount }}</td>
+                                <td>{{ fee.is_paid|yesno:"Paid,Unpaid" }}</td>
+                                <td>{{ fee.due_date }}</td>
+                                <td>{{ fee.created_at }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

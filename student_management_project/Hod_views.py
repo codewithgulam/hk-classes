@@ -10,7 +10,7 @@ import openpyxl
 from django.http import HttpResponse # Updated import
 from django.db.models import Count
 from datetime import date, timedelta
-
+from django.core.paginator import Paginator
 from collections import defaultdict
 from app.models import Fee
 
@@ -199,6 +199,36 @@ def DELETE_STUDENT(request, admin):
     messages.success(request, 'Record is delete successfully. !!!')
     return redirect('view_student')
     return render(request, 'Hod/view_student.html')
+#student Profile 
+
+@login_required(login_url='/')
+def student_profile(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    attendance_reports = Attendance_Report.objects.filter(student_id=student)
+    fee_records = Fee.objects.filter(student=student)
+
+    # Group attendance records by month and calculate counts
+    attendance_by_month = defaultdict(lambda: {'present': 0, 'absent': 0})
+    for report in attendance_reports:
+        month = report.attendance_id.attendance_date.strftime('%B %Y')
+        if report.status == 'Present':
+            attendance_by_month[month]['present'] += 1
+        else:
+            attendance_by_month[month]['absent'] += 1
+
+    # Paginate the attendance records by month
+    paginator = Paginator(list(attendance_by_month.items()), 3)  # Show 3 months per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'student': student,
+        'attendance_by_month': attendance_by_month,
+        'page_obj': page_obj,
+        'fee_records': fee_records,
+    }
+    return render(request, 'Hod/student_profile.html', context)
+    
 
 @staff_member_required(redirect_field_name='next', login_url='login')
 def ADD_SCHOOL(request):
@@ -456,6 +486,7 @@ def DELETE_SESSION(request, id):
 
 
 # Attandence views
+
 @staff_member_required(redirect_field_name='next', login_url='login')
 def MARK_ATTENDANCE(request):
     students = Student.objects.filter(admin__user_type=3)  # Filter only students
@@ -477,11 +508,12 @@ def MARK_ATTENDANCE(request):
                 attendance_id=attendance
             )
             # Update the status of the attendance report
-            attendance_report.status = status
+            attendance_report.status = 'Present' if status == 'present' else 'Absent'
             attendance_report.save()
         messages.success(request, 'Attendance marked successfully.')
         return redirect('mark_attendance')
     return render(request, 'Hod/mark_attendance.html', {'students': students, 'sessions': sessions})
+
 
 
 @staff_member_required(redirect_field_name='next', login_url='login')
