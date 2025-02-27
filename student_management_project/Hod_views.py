@@ -135,19 +135,7 @@ def VIEW_STUDENT(request):
     }
     return render(request, 'Hod/view_student.html', context)
 
-@staff_member_required(redirect_field_name='next', login_url='login')
-def EDIT_STUDENT(request, student_id):
-    student = Student.objects.get(id=student_id)
-    schools = School.objects.all()
-    session_years = Session_Year.objects.all()
-    context = {
-        'student': student,
-        'schools': schools,
-        'session_years': session_years,
-    }
-    return render(request, 'Hod/edit_student.html', context)
 
-@staff_member_required(redirect_field_name='next', login_url='login')
 def UPDATE_STUDENT(request):
     if request.method == "POST":
         student_id= request.POST.get('student_id')
@@ -191,6 +179,7 @@ def UPDATE_STUDENT(request):
         messages.success(request, 'Data Updated is successfully. !!!')
         return redirect('view_student')
     return render(request, 'Hod/edit_student.html')
+
 
 @staff_member_required(redirect_field_name='next', login_url='login')
 def DELETE_STUDENT(request, admin):
@@ -823,3 +812,15 @@ def MARK_FEE_UNPAID(request, fee_id):
 #         'attendance_report': attendance_report
 #     }
 #     return render(request, 'Hod/view_attendance.html', context)
+
+@staff_member_required(redirect_field_name='next', login_url='login')
+def EDIT_STUDENT(request, student_id):
+    student = Student.objects.get(id=student_id)
+    schools = School.objects.all()
+    session_years = Session_Year.objects.all()
+    context = {
+        'student': student,
+        'schools': schools,
+        'session_years': session_years,
+    }
+    return render(request, 'Hod/edit_student.html', context)
