@@ -130,55 +130,67 @@ def ADD_STUDENT(request):
 @staff_member_required(redirect_field_name='next', login_url='login')
 def VIEW_STUDENT(request):
     students = Student.objects.filter(admin__user_type=3)
+    # Fetch the fee data for each student
+    for student in students:
+        fee = Fee.objects.filter(student=student).first()
+        student.fee_amount = fee.amount if fee else 0
+
     context = {
         'students': students
     }
     return render(request, 'Hod/view_student.html', context)
 
 
+@staff_member_required(redirect_field_name='next', login_url='login')
 def UPDATE_STUDENT(request):
     if request.method == "POST":
-        student_id= request.POST.get('student_id')
+        student_id = request.POST.get('student_id')
         profile_pic = request.FILES.get('profile_pic')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
         username = request.POST.get('username')
         email = request.POST.get('email')
-        password = request.POST.get('password')
         address = request.POST.get('address')
         gender = request.POST.get('gender')
         school_id = request.POST.get('school_id')
         session_year_id = request.POST.get('session_year_id')
         join_date = request.POST.get('join_date')
         mobile_number = request.POST.get('mobile_number')
-        fee = request.POST.get('fee')
-        print(profile_pic, first_name, last_name, username, email, password, address, gender, school_id, 
-              session_year_id, join_date, mobile_number, fee)
-        user = CustomUser.objects.get(id = student_id)
-        # user.profile_pic = profile_pic
+        fee_amount = request.POST.get('fee_amount')
+
+        user = CustomUser.objects.get(id=student_id)
         user.first_name = first_name
         user.last_name = last_name
-        user.email = email
         user.username = username
-        if password != None and password != "":
-            user.password = password
-        if profile_pic != None and profile_pic != "":
+        user.email = email
+        if profile_pic:
             user.profile_pic = profile_pic
         user.save()
 
-        student = Student.objects.get(admin = student_id)
+        student = Student.objects.get(admin=student_id)
         student.address = address
         student.gender = gender
-        school = School.objects.get(id = school_id)
-        student.school_id = school
-        session_year = Session_Year.objects.get(id = session_year_id)
+        school = School.objects.get(id=school_id)
+        student.school = school
+        session_year = Session_Year.objects.get(id=session_year_id)
         student.session_year_id = session_year
         student.join_data = join_date
         student.mobile_number = mobile_number
         student.save()
-        messages.success(request, 'Data Updated is successfully. !!!')
+
+        # Update the fee amount for the student
+        fee = Fee.objects.filter(student=student).first()
+        if fee:
+            fee.amount = fee_amount
+            fee.save()
+        else:
+            Fee.objects.create(student=student, amount=fee_amount)
+
+        messages.success(request, 'Data Updated successfully. !!!')
         return redirect('view_student')
-    return render(request, 'Hod/edit_student.html')
+    else:
+        messages.error(request, 'Failed to update student data. Please try again.')
+        return redirect('edit_student', student_id=student_id)
 
 
 @staff_member_required(redirect_field_name='next', login_url='login')
@@ -647,8 +659,6 @@ def MARK_FEE_UNPAID(request, fee_id):
     messages.success(request, "Fee marked as unpaid successfully!")
     return redirect('fee_list')
 
-
-
 # This is a Staff Notification
 # @staff_member_required(redirect_field_name='next', login_url='login')
 # def STAFF_SEND_NOTIFICATION(request):
@@ -818,9 +828,15 @@ def EDIT_STUDENT(request, student_id):
     student = Student.objects.get(id=student_id)
     schools = School.objects.all()
     session_years = Session_Year.objects.all()
+    
+    # Fetch the existing fee data for the student
+    fee = Fee.objects.filter(student=student).first()
+    fee_amount = fee.amount if fee else 0
+
     context = {
         'student': student,
         'schools': schools,
         'session_years': session_years,
+        'fee_amount': fee_amount,
     }
     return render(request, 'Hod/edit_student.html', context)

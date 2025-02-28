@@ -46,17 +46,13 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>
                                     <h2 class="table-avatar">
-                                        <a href="{% url 'student_profile' student.id %}" class="avatar avatar-sm mr-2"><img class="avatar-img rounded-circle" src="/{{ student.admin.profile_pic }}" alt="User Image"></a>
-                                        <a href="{% url 'student_profile' student.id %}">{{ student.admin.first_name }} {{ student.admin.last_name }}</a>
+                                        <a href="student-details.html" class="avatar avatar-sm mr-2"><img class="avatar-img rounded-circle" src="/{{ student.admin.profile_pic }}" alt="User Image"></a>
+                                        <a href="student-details.html">{{ student.admin.first_name }} {{ student.admin.last_name }}</a>
                                     </h2>
                                 </td>
                                 <td>{{ student.school.name }}</td>
                                 <td>
-                                    {% if student.fees.exists %}
-                                        {{ student.fees.latest.amount }}
-                                    {% else %}
-                                        0
-                                    {% endif %}
+                                    {{ student.fee_amount }}
                                 </td>
                                 <td>{{ student.admin.email }}</td>
                                 <td>{{ student.gender }}</td>
