@@ -40,15 +40,17 @@
                         <li><a href="{% url 'view_school' %}"> View School</a></li>
                     </ul>
                 </li>
+                    {% comment %} 
+
                 <li class="submenu {% active_link 'add_subject' 'active' %} {% active_link 'view_subject' 'active' %}">
                     <a><i class="fas fa-book-reader"></i> <span> Subjects</span> <span class="menu-arrow"></span></a>
-                    {% comment %} 
                     <ul>
                         <li><a href="{% url 'add_subject' %}">Add Subject</a></li>
                         <li><a href="{% url 'view_subject' %}">View Subject </a></li>
                     </ul> 
-                    {% endcomment %}
+                    
                 </li>
+                {% endcomment %}
                 <li class="submenu {% active_link 'add_session' 'active' %} {% active_link 'view_session' 'active' %}">
                     <a><i class="fas fa-clock"></i> <span> Session</span> <span class="menu-arrow"></span></a>
                     <ul>
